@@ -1,5 +1,5 @@
 ---
-- hosts: mysql_simple
+- hosts: '{{ target | default("mysql_simple") }}'
   remote_user: root
 
   tasks:
