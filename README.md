@@ -6,6 +6,5 @@ Everyday commands:
 
     ansible-lint playbook.yml
     ansible-playbook --syntax-check playbook.yml
-    ansible-playbook --syntax-check --verbose playbook.yml
 
-    ansible-playbook --syntax-check playbook.yml
+    ansible-playbook playbook.yml
