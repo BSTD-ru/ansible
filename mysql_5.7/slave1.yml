@@ -1,0 +1,72 @@
+---
+- hosts: '{{ target | default("mysql_slave1") }}'
+  remote_user: root
+
+  tasks:
+  - name: Install python3-pip
+    apt:
+      name: python3-pip
+      state: present
+      update_cache: yes
+
+  - name: Make sure pymysql is present
+    pip:
+      name: pymysql
+      state: present
+
+  # Ubuntu 18.4 = MySQL 5.7
+  - name: Install mysql
+    apt:
+      name: mysql-server
+      state: present
+
+  - name: Ensure that MySQL is started
+    service:
+      name: mysql
+      state: started
+
+  - name: Create databases with name "default_db"
+    mysql_db:
+      name: default_db
+      state: present
+      login_unix_socket: /var/run/mysqld/mysqld.sock
+
+  - name: Create database user with password "default_password"
+    mysql_user:
+      name: default_user
+      password: '*E4A037873BF6C039358C12D2B772D39954E0DC79'
+      encrypted: yes
+      state: present
+      priv: 'default_db.*:ALL'
+      login_unix_socket: /var/run/mysqld/mysqld.sock
+      host: '%'
+
+  - name: Copy slave1.cnf
+    copy:
+      src: slave1.cnf
+      dest: /etc/mysql/my.cnf
+
+  - name: Restart MySQL
+    service:
+      name: mysql
+      state: restarted
+
+  - name: Configure replication
+    mysql_replication:
+      mode: changemaster
+      master_host: '{{ master }}'
+      master_log_file: '{{ log_file }}'
+      master_log_pos: '{{ log_pos }}'
+      master_user: replication_user
+      master_password: default_password
+      login_unix_socket: /var/run/mysqld/mysqld.sock
+
+  - name: Start MySQL slave
+    mysql_replication:
+      mode: startslave
+      login_unix_socket: /var/run/mysqld/mysqld.sock
+
+  - name: Check slave status
+    mysql_replication:
+      mode: getslave
+      login_unix_socket: /var/run/mysqld/mysqld.sock

@@ -1,0 +1,5 @@
+[mysqld]
+
+bind_address = 0.0.0.0
+server-id = 2
+binlog_do_db = default_db

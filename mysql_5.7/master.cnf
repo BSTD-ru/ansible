@@ -1,0 +1,6 @@
+[mysqld]
+
+bind_address = 0.0.0.0
+server-id = 1
+binlog_do_db = default_db
+log_bin = /var/log/mysql/mysql-bin.log
