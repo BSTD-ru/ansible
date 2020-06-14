@@ -1,5 +1,5 @@
 ---
-- hosts: '{{ target }}'
+- hosts: '{{ target | default("zabbix_agent_mysql") }}'
   remote_user: root
 
   tasks:
