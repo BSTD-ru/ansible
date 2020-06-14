@@ -1,0 +1,58 @@
+---
+- hosts: '{{ target }}'
+  remote_user: root
+
+  tasks:
+  - name: Install Zabbix 5.0 package
+    apt:
+      deb: https://repo.zabbix.com/zabbix/5.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_5.0-1+bionic_all.deb
+
+  - name: Install Zabbix agent 2
+    apt:
+      name: zabbix-agent2
+      update_cache: yes
+
+  - name: Config Zabbix server
+    lineinfile:
+      path: /etc/zabbix/zabbix_agent2.conf
+      regexp: '^Server='
+      line: 'Server={{ server }}'
+
+  - name: Config Zabbix agent host name
+    lineinfile:
+      path: /etc/zabbix/zabbix_agent2.conf
+      regexp: '^Hostname='
+      line: 'Hostname={{ target }}'
+
+  - name: Disable active checking in Zabbix agent config
+    lineinfile:
+      path: /etc/zabbix/zabbix_agent2.conf
+      regexp: '^ServerActive='
+      state: absent
+
+  - name: Create Zabbix Agent DB user
+    mysql_user:
+      name: zbx_monitor
+      password: '*E4A037873BF6C039358C12D2B772D39954E0DC79'
+      encrypted: yes
+      state: present
+      priv: '*.*:USAGE,REPLICATION CLIENT,PROCESS,SHOW DATABASES,SHOW VIEW'
+      login_unix_socket: /var/run/mysqld/mysqld.sock
+      host: 'localhost'
+
+  - name: Set Zabbix MySQL user
+    lineinfile:
+      path: /etc/zabbix/zabbix_agent2.conf
+      regexp: '^Plugins\.Mysql\.User='
+      line: 'Plugins.Mysql.User=zbx_monitor'
+
+  - name: Set Zabbix MySQL password
+    lineinfile:
+      path: /etc/zabbix/zabbix_agent2.conf
+      regexp: '^Plugins\.Mysql\.Password='
+      line: 'Plugins.Mysql.Password=default_password'
+
+  - name: Restart Zabbix agent
+    service:
+      name: zabbix-agent2
+      state: restarted
