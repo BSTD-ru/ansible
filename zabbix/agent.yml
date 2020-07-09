@@ -1,27 +1,42 @@
 ---
-- hosts: '{{ target }}'
+- hosts: '{{ target | default("zabbix_agent") }}'
   remote_user: root
 
   tasks:
-  - name: Install Zabbix agent
+  # - name: Install Zabbix agent
+  #   apt:
+  #     name: zabbix-agent
+  #     state: present
+  #     update_cache: yes
+
+  - name: Install Zabbix 5.0 package
     apt:
-      name: zabbix-agent
-      state: present
+      deb: https://repo.zabbix.com/zabbix/5.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_5.0-1+bionic_all.deb
+
+  - name: Install Zabbix agent 2
+    apt:
+      name: zabbix-agent2
       update_cache: yes
 
-  - name: Config server
+  - name: Config Zabbix server
     lineinfile:
-      path: /etc/zabbix/zabbix_agentd.conf
+      path: /etc/zabbix/zabbix_agent2.conf
       regexp: '^Server='
       line: 'Server={{ server }}'
 
-  - name: Config host name
+  - name: Config Zabbix agent host name
     lineinfile:
-      path: /etc/zabbix/zabbix_agentd.conf
+      path: /etc/zabbix/zabbix_agent2.conf
       regexp: '^Hostname='
       line: 'Hostname={{ target }}'
 
+  - name: Disable active checking in Zabbix agent config
+    lineinfile:
+      path: /etc/zabbix/zabbix_agent2.conf
+      regexp: '^ServerActive='
+      state: absent
+
   - name: Restart Zabbix agent
     service:
-      name: zabbix-agent
+      name: zabbix-agent2
       state: restarted
