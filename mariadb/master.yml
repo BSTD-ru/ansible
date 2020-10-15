@@ -1,5 +1,5 @@
 ---
-- hosts: '{{ target | default("mysql_slave1") }}'
+- hosts: '{{ target | default("mariadb_master") }}'
   remote_user: root
 
   tasks:
@@ -14,13 +14,12 @@
       name: pymysql
       state: present
 
-  # Ubuntu 18.4 = MySQL 5.7
-  - name: Install mysql
+  - name: Install MariaDB
     apt:
-      name: mysql-server
+      name: mariadb-server
       state: present
 
-  - name: Ensure that MySQL is started
+  - name: Ensure that MariaDB is started
     service:
       name: mysql
       state: started
@@ -41,39 +40,28 @@
       login_unix_socket: /var/run/mysqld/mysqld.sock
       host: '%'
 
-  - name: Copy slave1.cnf
+  - name: Create replication user with password "default_password"
+    mysql_user:
+      name: replication_user
+      password: '*E4A037873BF6C039358C12D2B772D39954E0DC79'
+      encrypted: yes
+      state: present
+      priv: '*.*:REPLICATION SLAVE'
+      login_unix_socket: /var/run/mysqld/mysqld.sock
+      host: '%'
+
+  - name: Copy master.cnf
     copy:
-      src: slave1.cnf
+      src: master.cnf
       dest: /etc/mysql/my.cnf
       mode: 0644
 
-  - name: Restart MySQL
+  - name: Restart MariaDB
     service:
       name: mysql
       state: restarted
 
-#  - name: Stop slave
-#    mysql_replication:
-#      mode: stopslave
-#      login_unix_socket: /var/run/mysqld/mysqld.sock
-
-  - name: Configure replication
+  - name: Get master binlog file name and binlog position
     mysql_replication:
-      mode: changemaster
-      master_log_file: '{{ log_file }}'
-      master_log_pos: '{{ log_pos }}'
-      master_host: '{{ master }}'
-      master_port: '{{ master_port }}'
-      master_user: replication_user
-      master_password: default_password
-      login_unix_socket: /var/run/mysqld/mysqld.sock
-
-  - name: Start MySQL slave
-    mysql_replication:
-      mode: startslave
-      login_unix_socket: /var/run/mysqld/mysqld.sock
-
-  - name: Check slave status
-    mysql_replication:
-      mode: getslave
+      mode: getmaster
       login_unix_socket: /var/run/mysqld/mysqld.sock

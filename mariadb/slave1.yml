@@ -1,5 +1,5 @@
 ---
-- hosts: '{{ target | default("mysql_slave1") }}'
+- hosts: '{{ target | default("mariadb_slave1") }}'
   remote_user: root
 
   tasks:
@@ -14,13 +14,12 @@
       name: pymysql
       state: present
 
-  # Ubuntu 18.4 = MySQL 5.7
-  - name: Install mysql
+  - name: Install MariaDB
     apt:
-      name: mysql-server
+      name: mariadb-server
       state: present
 
-  - name: Ensure that MySQL is started
+  - name: Ensure that MariaDB is started
     service:
       name: mysql
       state: started
@@ -47,7 +46,7 @@
       dest: /etc/mysql/my.cnf
       mode: 0644
 
-  - name: Restart MySQL
+  - name: Restart MariaDB
     service:
       name: mysql
       state: restarted
@@ -68,7 +67,7 @@
       master_password: default_password
       login_unix_socket: /var/run/mysqld/mysqld.sock
 
-  - name: Start MySQL slave
+  - name: Start MariaDB slave
     mysql_replication:
       mode: startslave
       login_unix_socket: /var/run/mysqld/mysqld.sock

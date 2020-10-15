@@ -1,6 +1,6 @@
 [mysqld]
 
-bind_address = 0.0.0.0
-port = 3329
+;bind_address = 0.0.0.0
+;port = 3306
 server-id = 2
 binlog_do_db = default_db

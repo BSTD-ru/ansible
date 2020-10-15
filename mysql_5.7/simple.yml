@@ -45,6 +45,7 @@
     copy:
       src: my.cnf
       dest: /etc/mysql/my.cnf
+      mode: 0644
 
   - name: Restart MySQL
     service:

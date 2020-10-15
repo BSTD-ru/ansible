@@ -1,5 +1,5 @@
 ---
-- hosts: '{{ target | default("mysql_master") }}'
+- hosts: '{{ target | default("mariadb_simple") }}'
   remote_user: root
 
   tasks:
@@ -14,13 +14,12 @@
       name: pymysql
       state: present
 
-  # Ubuntu 18.4 = MySQL 5.7
-  - name: Install mysql
+  - name: Install MariaDB
     apt:
-      name: mysql-server
+      name: mariadb-server
       state: present
 
-  - name: Ensure that MySQL is started
+  - name: Ensure that MariaDB is started
     service:
       name: mysql
       state: started
@@ -41,28 +40,13 @@
       login_unix_socket: /var/run/mysqld/mysqld.sock
       host: '%'
 
-  - name: Create replication user with password "default_password"
-    mysql_user:
-      name: replication_user
-      password: '*E4A037873BF6C039358C12D2B772D39954E0DC79'
-      encrypted: yes
-      state: present
-      priv: '*.*:REPLICATION SLAVE'
-      login_unix_socket: /var/run/mysqld/mysqld.sock
-      host: '%'
-
-  - name: Copy master.cnf
+  - name: Copy my.cnf
     copy:
-      src: master.cnf
+      src: my.cnf
       dest: /etc/mysql/my.cnf
       mode: 0644
 
-  - name: Restart MySQL
+  - name: Restart MariaDB
     service:
       name: mysql
       state: restarted
-
-  - name: Get master binlog file name and binlog position
-    mysql_replication:
-      mode: getmaster
-      login_unix_socket: /var/run/mysqld/mysqld.sock
